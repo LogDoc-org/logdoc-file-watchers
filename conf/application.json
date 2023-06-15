@@ -1,0 +1,43 @@
+{
+  "debug": true,
+  "logdoc": {
+    "host": "85.10.224.123",
+    "port": "5656",
+    "proto": "tcp",
+    "default": {
+      "app": "file-watcher",
+      "source": "file-watcher source",
+      "level": "DEBUG"
+    }
+  },
+  "files": [
+    {
+      "path": "example1.txt",
+      "pattern": "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:request}",
+      "app": "file-watcher example1.txt",
+      "source": "file-watcher example1.txt source",
+      "level": "DEBUG",
+      "layout": "02/Jan/2006:15:04:05 -0700"
+    },
+    {
+      "path": "example2.txt",
+      "pattern": "%{CUST_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}.",
+      "custom": "%{MONTH} %{MONTHDAY} %{TIME}",
+      "app": "file-watcher example2.txt",
+      "layout": "Jan 02 15:04:05"
+    },
+    {
+      "path": "example3.txt",
+      "pattern": "%{GREEDYDATA:path}: %{GREEDYDATA:message}",
+      "app": "file-watcher example3.txt",
+      "layout": "02/Jan/2006:15:04:05 -0700"
+    },
+    {
+      "path": "example4.txt",
+      "pattern": "%{CUST_DATE:timestamp} %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}",
+      "custom": "%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}",
+      "app": "file-watcher example4.txt",
+      "layout": "2006-01-02 15:04:05"
+    }
+  ]
+}
