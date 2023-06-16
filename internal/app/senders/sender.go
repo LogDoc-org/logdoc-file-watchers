@@ -41,7 +41,7 @@ func LogDocSender(ctx context.Context, wg *sync.WaitGroup, ldConf *structs.LD, l
 			// Отправляем сообщение в LogDoc
 			err := ld.SendMessage(srcDateTime, message)
 			if err == nil {
-				log.Println("Successfully sent data to LogDoc, data source date/time:", srcDateTime, ", data:", message)
+				log.Println("Message successfully sent to LogDoc, data source date/time:", srcDateTime, ", data:", message)
 				return
 			}
 			log.Println("ERROR sending message to LogDoc, ", err)

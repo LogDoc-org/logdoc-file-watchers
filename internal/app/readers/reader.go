@@ -56,12 +56,13 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 				data := scanner.Text()
 				if data != "" {
 					srcDateTime, message, e := ld.ConstructMessageWithFields(data, configFile.Pattern)
-					if e == nil {
-						log.Println("Data ready for sending, source date/time:", srcDateTime, ", data:", message)
-						wg.Add(1)
-						go senders.LogDocSender(ctx, wg, ldConf, &ld, srcDateTime, message)
+					if e != nil {
+						log.Println("Error constructing LogDoc message, data:", data, ", pattern:", configFile.Pattern, ", error:", e)
+						continue
 					}
-					log.Println("Error constructing LogDoc message, ", e)
+					log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
+					wg.Add(1)
+					go senders.LogDocSender(ctx, wg, ldConf, &ld, srcDateTime, message)
 				}
 			}
 			time.Sleep(500 * time.Millisecond)
