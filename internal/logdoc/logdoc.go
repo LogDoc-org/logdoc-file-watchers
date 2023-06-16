@@ -109,7 +109,7 @@ func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern strin
 	g, _ := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
 
 	if ld.CustomDatePattern != "" {
-		err := g.AddPattern("CUST_DATE", ld.CustomDatePattern)
+		err := g.AddPattern("CUSTOM_DATE", ld.CustomDatePattern)
 		if err != nil {
 			return "", "", err
 		}

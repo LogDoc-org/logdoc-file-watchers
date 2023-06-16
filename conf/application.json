@@ -21,7 +21,7 @@
     },
     {
       "path": "example2.txt",
-      "pattern": "%{CUST_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}.",
+      "pattern": "%{CUSTOM_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}.",
       "custom": "%{MONTH} %{MONTHDAY} %{TIME}",
       "app": "file-watcher example2.txt",
       "layout": "Jan 02 15:04:05"
@@ -34,8 +34,7 @@
     },
     {
       "path": "example4.txt",
-      "pattern": "%{CUST_DATE:timestamp} %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}",
-      "custom": "%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}",
+      "pattern": "(?P<timestamp>%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}) %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}",
       "app": "file-watcher example4.txt",
       "layout": "2006-01-02 15:04:05"
     }
