@@ -9,8 +9,8 @@ LINUX=$(PROJECTNAME)_linux_$(ARCH)_$(VERSION)
 DARWIN=$(PROJECTNAME)_darwin_$(ARCH)_$(VERSION)
 
 # Go переменные.
-GOBASE=$(shell pwd)
-GOPATH=$(shell go env GOPATH)
+GOBASE="/usr/local/go"
+GOPATH=$(shell /usr/local/go/bin/go env GOPATH)
 GOBIN=$(GOBASE)/bin
 GOFILES=$(wildcard *.go)
 
