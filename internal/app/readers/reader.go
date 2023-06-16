@@ -60,7 +60,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 						log.Println("Error constructing LogDoc message, data:", data, ", pattern:", configFile.Pattern, ", error:", e)
 						continue
 					}
-					log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
+					//log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 					wg.Add(1)
 					go senders.LogDocSender(ctx, wg, ldConf, &ld, srcDateTime, message)
 				}
