@@ -79,6 +79,11 @@ func (ld *LogDocStruct) SendMessage(srcDateTime string, message string) error {
 	// Финальный байт, завершаем
 	result = append(result, []byte("\n")...)
 
+	if *ld.Conn == nil {
+		log.Println(fmt.Errorf("соединение c LogDoc сервером потеряно, %w", err))
+		return err
+	}
+
 	_, err = (*ld.Conn).Write(result)
 	if err != nil {
 		log.Println(fmt.Errorf("ошибка записи в соединение, %w", err))
