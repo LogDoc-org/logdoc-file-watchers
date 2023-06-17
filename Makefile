@@ -12,6 +12,7 @@ DARWIN=$(PROJECTNAME)_darwin_$(ARCH)_$(VERSION)
 GOBASE="/usr/local/go"
 GOPATH=$(shell /usr/local/go/bin/go env GOPATH)
 GOBIN=$(GOBASE)/bin
+GOCMD=$(GOBASE)/bin/go
 GOFILES=$(wildcard *.go)
 
 # Перенаправление вывода ошибок в файл, чтобы мы показывать его в режиме разработки.
@@ -42,15 +43,15 @@ darwin: $(DARWIN)
 
 $(WINDOWS):
 	@echo "Building windows app..."
-	@env GOOS=windows GOARCH=$(ARCH) go build -v -o bin/$(WINDOWS) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
+	@env GOOS=windows GOARCH=$(ARCH) $(GOCMD) build -v -o bin/$(WINDOWS) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
 
 $(LINUX):
 	@echo "Building linux app..."
-	@env GOOS=linux GOARCH=$(ARCH) go build -v -o bin/$(LINUX) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
+	@env GOOS=linux GOARCH=$(ARCH) $(GOCMD) build -v -o bin/$(LINUX) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
 
 $(DARWIN):
 	@echo "Building macos app..."
-	@env GOOS=darwin GOARCH=$(MAC_ARCH) go build -v -o bin/$(DARWIN) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
+	@env GOOS=darwin GOARCH=$(MAC_ARCH) $(GOCMD) build -v -o bin/$(DARWIN) -ldflags="-s -w -X main.version=$(VERSION)" ./cmd/main.go
 
 clean:
 	@echo "Cleaning up..."
