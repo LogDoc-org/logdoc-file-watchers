@@ -6,6 +6,7 @@ import (
 	"file-watcher/internal/logdoc"
 	"file-watcher/internal/pkg/app"
 	"file-watcher/internal/utils"
+	"flag"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -25,7 +26,9 @@ func main() {
 		}
 	}()
 
-	config := configreader.ProcessConfig()
+	cflag := flag.String("config", "", "-config=application.json")
+	flag.Parse()
+	config := configreader.ProcessConfig(*cflag)
 
 	conn, e := logdoc.Connect(&config.LogDoc)
 	if e != nil {

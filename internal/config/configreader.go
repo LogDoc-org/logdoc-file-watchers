@@ -8,10 +8,14 @@ import (
 	"net/http"
 )
 
-func ProcessConfig() *structs.Config {
+func ProcessConfig(cflag string) *structs.Config {
 	var config structs.Config
 
-	viper.SetConfigName("application.json")
+	if cflag == "" {
+		viper.SetConfigName("application.json")
+	} else {
+		viper.SetConfigName(cflag)
+	}
 	viper.SetConfigType("json")
 	viper.AddConfigPath("./conf")
 
