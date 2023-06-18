@@ -64,11 +64,17 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 						log.Println("Error constructing LogDoc message:\n\tfile:", configFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
 					}
 					//log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
+
+					if logDocMessage == nil {
+						log.Println("Patterns trying failed! Dropping message...\n\tfile:", configFile.Path, "\n\tdata:", data)
+						goto CONTINUE
+					}
 					wg.Add(1)
 					sender := senders.New(ctx, wg, ldConfig, &logDocStruct, logDocMessage)
 					go sender.SendMessage()
 				}
 			}
+		CONTINUE:
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
