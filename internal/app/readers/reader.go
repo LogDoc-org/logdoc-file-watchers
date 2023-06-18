@@ -54,11 +54,14 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				data := scanner.Text()
+				var srcDateTime, message string
 				if data != "" {
-					srcDateTime, message, e := ld.ConstructMessageWithFields(data, configFile.Pattern)
-					if e != nil {
-						log.Println("Error constructing LogDoc message, data:", data, ", pattern:", configFile.Pattern, ", error:", e)
-						continue
+					for _, pattern := range configFile.Patterns {
+						srcDateTime, message, err = ld.ConstructMessageWithFields(data, pattern)
+						if err == nil {
+							continue
+						}
+						log.Println("Error constructing LogDoc message:\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
 					}
 					//log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 					wg.Add(1)

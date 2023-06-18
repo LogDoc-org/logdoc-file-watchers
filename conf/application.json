@@ -13,7 +13,10 @@
   "files": [
     {
       "path": "/var/log/nginx/access.log",
-      "pattern": "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:request} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{URI:request_uri}\" \"%{DATA:referer}\"",
+      "patterns": [
+        "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:%{WORD}%{URI})?\" \"%{DATA:referer}\"",
+        "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size}"
+      ],
       "app": "file-watcher nginx access.log",
       "source": "file-watcher nginx access.log source",
       "level": "INFO",
@@ -21,20 +24,26 @@
     },
     {
       "path": "/var/log/daemon.log",
-      "pattern": "%{CUSTOM_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}.",
+      "patterns": [
+        "%{CUSTOM_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}."
+      ],
       "custom": "%{MONTH} %{MONTHDAY} %{TIME}",
       "app": "file-watcher daemon.log",
       "layout": "Jan 02 15:04:05"
     },
     {
       "path": "/var/log/fontconfig.log",
-      "pattern": "%{GREEDYDATA:path}: %{GREEDYDATA:message}",
+      "patterns": [
+        "%{GREEDYDATA:path}: %{GREEDYDATA:message}"
+      ],
       "app": "file-watcher fontconfig.log",
       "layout": "02/Jan/2006:15:04:05 -0700"
     },
     {
       "path": "/var/log/dpkg.log",
-      "pattern": "(?P<timestamp>%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}) %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}",
+      "patterns": [
+        "(?P<timestamp>%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}) %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}"
+      ],
       "app": "file-watcher dpkg.log",
       "layout": "2006-01-02 15:04:05"
     }

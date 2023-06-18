@@ -37,9 +37,9 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 	return &conn, nil
 }
 
-func (ld *LogDocStruct) SendMessage(srcDateTime string, message string) error {
+func SendMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message string) error {
 
-	if ld.Conn == nil {
+	if conn == nil {
 		log.Println("Error in SendMessage, connection not available")
 		return fmt.Errorf("error in SendMessage, connection not available")
 	}

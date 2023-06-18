@@ -68,7 +68,7 @@
 ```json
 {
   "path": "/var/log/nginx/access.log", // Путь к файлу в системе
-  "pattern": "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:request}", // grok паттерн для разбора строки на поля с данными (ниже рассмотрим примеры паттернов с их подробным описанием)
+  "pattern": "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:-%{URI})?\" \"%{DATA:referer}\"", // grok паттерн для разбора строки на поля с данными (ниже рассмотрим примеры паттернов с их подробным описанием)
   "app": "file-watcher nginx access.log", // переопределяем на уровне файла имя приложения LogDoc
   "source": "file-watcher nginx access.log source", // переопределяем на уровне файла источник данных для LogDoc
   "level": "INFO", // переопределяем на уровне файла уровень лога записи в LogDoc

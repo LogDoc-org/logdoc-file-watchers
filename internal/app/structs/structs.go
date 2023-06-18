@@ -14,13 +14,13 @@ type LD struct {
 }
 
 type File struct {
-	Path    string `json:"path"`
-	Pattern string `json:"pattern"`
-	App     string `json:"app"`
-	Source  string `json:"source"`
-	Level   string `json:"level"`
-	Layout  string `json:"layout"`
-	Custom  string `json:"custom"`
+	Path     string   `json:"path"`
+	Patterns []string `json:"patterns"`
+	App      string   `json:"app"`
+	Source   string   `json:"source"`
+	Level    string   `json:"level"`
+	Layout   string   `json:"layout"`
+	Custom   string   `json:"custom"`
 }
 
 type Default struct {
