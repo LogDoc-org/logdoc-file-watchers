@@ -37,7 +37,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 	// перемещаем указатель файла на конец файла
 	_, err := file.Seek(0, 2)
 	if err != nil {
-		fmt.Println(err)
+		log.Println("ERROR: Ошибка перемещения указателя, ", err)
 		return
 	}
 
@@ -61,7 +61,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 						if err == nil {
 							break
 						}
-						log.Println("Error constructing LogDoc message:\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
+						log.Println("Error constructing LogDoc message:\n\tfile:", configFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
 					}
 					//log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 					wg.Add(1)
