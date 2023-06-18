@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, ldConf *structs.LD, configFile *structs.File, file *os.File) {
+func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, ldConfig *structs.LD, configFile *structs.File, file *os.File) {
 	defer func() {
 		file.Close()
 		wg.Done()
@@ -23,11 +23,11 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 	}()
 
 	// Формируем LD структуру на основе текущей конфигурации
-	ld := logdoc.LogDocStruct{
+	logDocStruct := logdoc.LogDocStruct{
 		Conn:              ldConnection,
-		App:               processField(ldConf, configFile, "app"),
-		Src:               processField(ldConf, configFile, "src"),
-		Lvl:               processField(ldConf, configFile, "lvl"),
+		App:               processField(ldConfig, configFile, "app"),
+		Src:               processField(ldConfig, configFile, "src"),
+		Lvl:               processField(ldConfig, configFile, "lvl"),
 		DateLayout:        configFile.Layout,
 		CustomDatePattern: configFile.Custom,
 	}
@@ -54,10 +54,10 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				data := scanner.Text()
-				var srcDateTime, message string
+				var logDocMessage []byte
 				if data != "" {
 					for _, pattern := range configFile.Patterns {
-						srcDateTime, message, err = ld.ConstructMessageWithFields(data, pattern)
+						logDocMessage, err = logDocStruct.ConstructMessageWithFields(data, pattern)
 						if err == nil {
 							continue
 						}
@@ -65,7 +65,8 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 					}
 					//log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 					wg.Add(1)
-					go senders.LogDocSender(ctx, wg, ldConf, &ld, srcDateTime, message)
+					sender := senders.New(ctx, wg, ldConfig, &logDocStruct, logDocMessage)
+					go sender.SendMessage()
 				}
 			}
 			time.Sleep(500 * time.Millisecond)

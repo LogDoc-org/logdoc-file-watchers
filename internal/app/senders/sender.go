@@ -11,44 +11,72 @@ import (
 	"time"
 )
 
-func LogDocSender(ctx context.Context, wg *sync.WaitGroup, ldConf *structs.LD, ld *logdoc.LogDocStruct, srcDateTime string, message string) {
+type LogDocSender struct {
+	ctx          context.Context
+	wg           *sync.WaitGroup
+	LogDocConfig *structs.LD
+	LogDocStruct *logdoc.LogDocStruct
+	Data         []byte
+}
+
+func New(ctx context.Context, wg *sync.WaitGroup, logDocConfig *structs.LD, logDocStruct *logdoc.LogDocStruct, data []byte) *LogDocSender {
+	return &LogDocSender{
+		ctx:          ctx,
+		wg:           wg,
+		LogDocConfig: logDocConfig,
+		LogDocStruct: logDocStruct,
+		Data:         data,
+	}
+}
+
+func (s *LogDocSender) SendMessage() {
 	defer func() {
-		wg.Done()
-		log.Println("<< Exiting LogDoc sender goroutine")
+		s.wg.Done()
+		//log.Println("<< Exiting LogDoc sender goroutine")
 	}()
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-s.ctx.Done():
 			return
 		default:
-			if ld.Conn == nil {
-				// коннектимся к ЛД
-				conn, err := utils.Retryer(func() (*net.Conn, error) {
-					r, e := logdoc.Connect(ldConf)
-					if e != nil {
-						return nil, e
-					}
-					return r, nil
-				}, 3, 5*time.Second)
-				if err != nil {
-					//log.Panic("LogDoc connection failed")
-					log.Println("LogDoc connection failed")
+			if s.LogDocStruct.Conn == nil {
+				conn := s.LogDocReconnect()
+				if conn == nil {
+					continue
 				}
-				ld.Conn = conn
+				s.LogDocStruct.Conn = conn
 			}
 
 			// Отправляем сообщение в LogDoc
-			err := logdoc.SendMessage(*ld.Conn, ld, srcDateTime, message)
-			if err == nil {
-				log.Println("Message successfully sent to LogDoc:\n\tdata source date/time:", srcDateTime, "\n\tmessage:", message)
-				return
+			err := logdoc.SendMessage(*s.LogDocStruct.Conn, s.Data)
+			if err != nil {
+				log.Println("ERROR sending message to LogDoc, retrying...\n\terror: ", err)
+				time.Sleep(time.Second)
+				conn := s.LogDocReconnect()
+				s.LogDocStruct.Conn = conn
+				continue
 			}
 
-			log.Println("ERROR sending message to LogDoc, reconnecting, error: ", err)
-
-			ld.Conn = nil
+			log.Println("Message successfully sent to LogDoc")
+			return
 		}
-		time.Sleep(time.Second)
+
 	}
+}
+
+func (s *LogDocSender) LogDocReconnect() *net.Conn {
+	// коннектимся к ЛД
+	conn, err := utils.Retryer(func() (*net.Conn, error) {
+		r, e := logdoc.Connect(s.LogDocConfig)
+		if e != nil {
+			return nil, e
+		}
+		return r, nil
+	}, s.LogDocConfig.Retries, 5*time.Second)
+	if err != nil {
+		//log.Panic("LogDoc connection failed")
+		log.Println("LogDoc connection failed")
+	}
+	return conn
 }

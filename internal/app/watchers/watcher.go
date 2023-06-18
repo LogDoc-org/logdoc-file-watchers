@@ -4,17 +4,16 @@ import (
 	"context"
 	"file-watcher/internal/app/readers"
 	"file-watcher/internal/app/structs"
-	"log"
 	"net"
 	"os"
 	"sync"
 	"time"
 )
 
-func WatchFile(ctx context.Context, wg *sync.WaitGroup, ldConf structs.LD, ldConnection *net.Conn, configFile structs.File, filename string) {
+func WatchFile(ctx context.Context, wg *sync.WaitGroup, ldConf structs.LD, ldConnection *net.Conn, watchingFile structs.File) {
 	defer func() {
 		wg.Done()
-		log.Println("<< Exiting watcher goroutine WatchFile ", filename)
+		//log.Println("<< Exiting watcher goroutine WatchFile ", watchingFile.Path)
 	}()
 
 	// waiting for file
@@ -23,10 +22,10 @@ func WatchFile(ctx context.Context, wg *sync.WaitGroup, ldConf structs.LD, ldCon
 		case <-ctx.Done():
 			return
 		default:
-			file, e := os.Open(filename)
+			file, e := os.Open(watchingFile.Path)
 			if e == nil {
 				wg.Add(1)
-				go readers.ReadFile(ctx, wg, ldConnection, &ldConf, &configFile, file)
+				go readers.ReadFile(ctx, wg, ldConnection, &ldConf, &watchingFile, file)
 				return
 			}
 			time.Sleep(500 * time.Millisecond)

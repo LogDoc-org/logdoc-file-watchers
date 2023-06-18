@@ -59,19 +59,20 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 				if !ok {
 					log.Println("Waiting for file ", filename, "...")
 
+					// добавляем файл в мапу, чтобы больше не стартовать его watcher
 					a.Mx.Lock()
 					a.FilesMap[filename] = "waiting"
 					a.Mx.Unlock()
 
-					var configFile structs.File
+					var watchingFile structs.File
 					for _, val := range a.Config.Files {
 						if val.Path == filename {
-							configFile = val
+							watchingFile = val
 						}
 					}
 					//atomic.AddInt64(&a.Watchers, 1)
 					wg.Add(1)
-					go watchers.WatchFile(ctx, wg, a.Config.LogDoc, a.LogDocConnection, configFile, filename)
+					go watchers.WatchFile(ctx, wg, a.Config.LogDoc, a.LogDocConnection, watchingFile)
 				}
 			}
 			time.Sleep(1 * time.Second)

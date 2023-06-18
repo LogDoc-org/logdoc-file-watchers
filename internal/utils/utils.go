@@ -16,19 +16,31 @@ func Ternary(condition bool, iftrue, iffalse any) any {
 	return iffalse
 }
 
-// реализация паттерна timeout and retry, прогрессивный ретрайер
+// реализация паттерна timeout and retry
 func Retryer(fn func() (*net.Conn, error), maxRetries int, initialRetryInterval time.Duration) (*net.Conn, error) {
-	retryInterval := initialRetryInterval
-	for i := 0; i < maxRetries; i++ {
-		resp, err := fn()
-		if err == nil {
-			return resp, nil
+	if maxRetries == 0 {
+		i := 0
+		for {
+			resp, err := fn()
+			if err == nil {
+				return resp, nil
+			}
+			log.Println(fmt.Errorf("unable to call function, attempt %d ", i+1))
+			i++
+			time.Sleep(initialRetryInterval)
 		}
-		log.Println(fmt.Errorf("unable to call function, attempt %d ", i+1))
-		time.Sleep(retryInterval)
-		//retryInterval *= 2 // увеличиваем время ожидания в 2 раза с каждой итерацией
+	} else {
+
+		for i := 0; i < maxRetries; i++ {
+			resp, err := fn()
+			if err == nil {
+				return resp, nil
+			}
+			log.Println(fmt.Errorf("unable to call function, attempt %d ", i+1))
+			time.Sleep(initialRetryInterval)
+		}
+		return nil, fmt.Errorf("unable to complete task after %d attempts", maxRetries)
 	}
-	return nil, fmt.Errorf("unable to complete task after %d attempts", maxRetries)
 }
 
 func CreatePID() {

@@ -37,11 +37,11 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 	return &conn, nil
 }
 
-func SendMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message string) error {
+func PrepareLogDocMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message string) ([]byte, error) {
 
 	if conn == nil {
 		log.Println("Error in SendMessage, connection not available")
-		return fmt.Errorf("error in SendMessage, connection not available")
+		return nil, fmt.Errorf("error in SendMessage, connection not available")
 	}
 
 	var lvl string
@@ -57,8 +57,8 @@ func SendMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message st
 
 	t, err := time.Parse(ld.DateLayout, srcDateTime)
 	if err != nil {
-		log.Println("Error parsing source date:", srcDateTime)
-		return err
+		log.Println("Error parsing source date time:\n\t", srcDateTime, "\n\tlayout:", ld.DateLayout)
+		return nil, err
 	}
 	tsrc := t.Format("060102150405.000") + "\n"
 
@@ -81,12 +81,16 @@ func SendMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message st
 
 	if *ld.Conn == nil {
 		log.Println(fmt.Errorf("соединение c LogDoc сервером потеряно, %w", err))
-		return err
+		return nil, err
 	}
 
-	_, err = (*ld.Conn).Write(result)
+	return result, nil
+}
+
+func SendMessage(conn net.Conn, msg []byte) error {
+	_, err := conn.Write(msg)
 	if err != nil {
-		log.Println(fmt.Errorf("ошибка записи в соединение, %w", err))
+		log.Println(fmt.Errorf("SendMessage ERROR, ошибка записи в соединение, %w", err))
 		return err
 	}
 	return nil
@@ -107,7 +111,7 @@ func WritePair(key string, value string, arr *[]byte) {
 	}
 }
 
-func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern string) (string, string, error) {
+func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern string) ([]byte, error) {
 	var ldMessage strings.Builder
 	ldMessage.WriteString(message)
 
@@ -116,18 +120,18 @@ func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern strin
 	if ld.CustomDatePattern != "" {
 		err := g.AddPattern("CUSTOM_DATE", ld.CustomDatePattern)
 		if err != nil {
-			return "", "", err
+			return nil, err
 		}
 	}
 
 	values, err := g.Parse(pattern, message)
 	if err != nil {
 		log.Println("Error parsing message, ", err)
-		return "", "", err
+		return nil, err
 	}
 
 	if len(values) == 0 {
-		return "", "", fmt.Errorf("pattern error, no values available")
+		return nil, fmt.Errorf("pattern error, no values available")
 	}
 
 	var i int
@@ -143,7 +147,14 @@ func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern strin
 	if _, ok := values["timestamp"]; !ok {
 		values["timestamp"] = "01/Jun/1951:23:59:59 +0300"
 	}
-	return values["timestamp"], ldMessage.String(), nil
+
+	data, e := PrepareLogDocMessage(*ld.Conn, ld, values["timestamp"], ldMessage.String())
+	if e != nil {
+		log.Println("Error Preparing LogDoc Message Structure:\n\tdata source date/time:", values["timestamp"], "\n\tmessage:", ldMessage.String())
+		return data, nil
+	}
+
+	return data, nil
 }
 
 func writeComplexPair(key string, value string, arr *[]byte) {

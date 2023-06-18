@@ -32,8 +32,9 @@ func main() {
 
 	conn, e := logdoc.Connect(&config.LogDoc)
 	if e != nil {
-		//log.Fatal("Нет связи с LogDoc сервером, ", e)
+		log.Fatal(" >> Fatal Error: Нет связи с LogDoc сервером, ", e)
 	}
+	defer (*conn).Close()
 
 	// Gracefully Shutdown
 	sig := make(chan os.Signal, 1)
@@ -50,7 +51,7 @@ func main() {
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		//log.Println("Got config file change:", e.Name, ", shutting down watchers, count:", atomic.LoadInt64(&application.Watchers))
-		log.Println("Got config file change:", e.Name, ", shutting down watchers")
+		log.Println("Application config file is changing...\n\tfile name:", e.Name, "\nshutting down watchers...")
 
 		cancel()
 		wg.Wait()

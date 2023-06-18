@@ -11,6 +11,7 @@ type LD struct {
 	Port    string  `json:"port"`
 	Proto   string  `json:"proto"`
 	Default Default `json:"default"`
+	Retries int     `json:"retries"`
 }
 
 type File struct {
