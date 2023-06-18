@@ -47,6 +47,14 @@
       ],
       "app": "file-watcher dpkg.log",
       "layout": "2006-01-02 15:04:05"
+    },
+    {
+      "path": "/opt/logdoc/community/log.log",
+      "patterns": [
+        "\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{LOGLEVEL:loglevel} %{DATA:class}\\.%{WORD:method}:%{NUMBER:line} - %{GREEDYDATA:message}"
+      ],
+      "app": "file-watcher logdoc community log",
+      "layout": "2006-01-02 15:04:05"
     }
   ]
 }
