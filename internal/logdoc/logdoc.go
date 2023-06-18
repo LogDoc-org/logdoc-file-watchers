@@ -37,7 +37,7 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 	return &conn, nil
 }
 
-func PrepareLogDocMessage(conn net.Conn, ld *LogDocStruct, srcDateTime string, message string) ([]byte, error) {
+func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, message string) ([]byte, error) {
 
 	if conn == nil {
 		log.Println("Error in SendMessage, connection not available")
@@ -148,7 +148,7 @@ func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern strin
 		values["timestamp"] = "01/Jun/1951:23:59:59 +0300"
 	}
 
-	data, e := PrepareLogDocMessage(*ld.Conn, ld, values["timestamp"], ldMessage.String())
+	data, e := PrepareLogDocMessage(ld.Conn, ld, values["timestamp"], ldMessage.String())
 	if e != nil {
 		log.Println("Error Preparing LogDoc Message Structure:\n\tdata source date/time:", values["timestamp"], "\n\tmessage:", ldMessage.String())
 		return data, nil

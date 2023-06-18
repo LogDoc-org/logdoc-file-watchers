@@ -59,7 +59,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 					for _, pattern := range configFile.Patterns {
 						logDocMessage, err = logDocStruct.ConstructMessageWithFields(data, pattern)
 						if err == nil {
-							continue
+							break
 						}
 						log.Println("Error constructing LogDoc message:\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
 					}
