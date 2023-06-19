@@ -15,15 +15,17 @@ type LogDocSender struct {
 	ctx          context.Context
 	wg           *sync.WaitGroup
 	LogDocConfig *structs.LD
+	WatchingFile *structs.File
 	LogDocStruct *logdoc.LogDocStruct
 	Data         []byte
 }
 
-func New(ctx context.Context, wg *sync.WaitGroup, logDocConfig *structs.LD, logDocStruct *logdoc.LogDocStruct, data []byte) *LogDocSender {
+func New(ctx context.Context, wg *sync.WaitGroup, logDocConfig *structs.LD, watchingFile *structs.File, logDocStruct *logdoc.LogDocStruct, data []byte) *LogDocSender {
 	return &LogDocSender{
 		ctx:          ctx,
 		wg:           wg,
 		LogDocConfig: logDocConfig,
+		WatchingFile: watchingFile,
 		LogDocStruct: logDocStruct,
 		Data:         data,
 	}
@@ -36,6 +38,7 @@ func (s *LogDocSender) SendMessage() {
 	}()
 
 	for {
+		//log.Print(">> Sender for file ", s.WatchingFile.Path, " working...")
 		select {
 		case <-s.ctx.Done():
 			return
@@ -61,7 +64,6 @@ func (s *LogDocSender) SendMessage() {
 			log.Println("Message successfully sent to LogDoc")
 			return
 		}
-
 	}
 }
 

@@ -111,18 +111,9 @@ func WritePair(key string, value string, arr *[]byte) {
 	}
 }
 
-func (ld *LogDocStruct) ConstructMessageWithFields(message string, pattern string) ([]byte, error) {
+func (ld *LogDocStruct) ConstructMessageWithFields(g *grok.Grok, message string, pattern string) ([]byte, error) {
 	var ldMessage strings.Builder
 	ldMessage.WriteString(message)
-
-	g, _ := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
-
-	if ld.CustomDatePattern != "" {
-		err := g.AddPattern("CUSTOM_DATE", ld.CustomDatePattern)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	values, err := g.Parse(pattern, message)
 	if err != nil {
@@ -198,9 +189,15 @@ func extractMessage(msg string) string {
 
 		for _, pair := range keyValuePairs {
 			keyValue := strings.Split(pair, "=")
-			if len(keyValue) == 2 {
+			if len(keyValue) >= 2 {
 				if keyValue[0] == "message" && keyValue[1] != "" {
-					message = keyValue[1]
+					for i := range keyValue {
+						if i > 0 {
+							message = message + keyValue[i] + "="
+						}
+					}
+					message = message[:len(message)-1]
+					break
 				}
 			}
 		}

@@ -7,7 +7,7 @@ import (
 	"file-watcher/internal/app/structs"
 	"file-watcher/internal/logdoc"
 	"file-watcher/internal/utils"
-	"fmt"
+	"github.com/vjeantet/grok"
 	"log"
 	"net"
 	"os"
@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, ldConfig *structs.LD, configFile *structs.File, file *os.File) {
+func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnection *net.Conn, ldConfig *structs.LD, configFile *structs.File, file *os.File) {
 	defer func() {
 		file.Close()
 		wg.Done()
@@ -47,7 +47,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 			return
 		default:
 			if _, e := os.Stat(file.Name()); os.IsNotExist(e) {
-				fmt.Println("File ", file.Name(), " does not exist")
+				log.Println("File ", file.Name(), " does not exist")
 				return
 			}
 
@@ -57,7 +57,8 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 				var logDocMessage []byte
 				if data != "" {
 					for _, pattern := range configFile.Patterns {
-						logDocMessage, err = logDocStruct.ConstructMessageWithFields(data, pattern)
+						log.Println("Trying pattern: ", pattern, "\n\tfile:", configFile.Path, "\n\tdata:", data)
+						logDocMessage, err = logDocStruct.ConstructMessageWithFields(g, data, pattern)
 						if err == nil {
 							break
 						}
@@ -70,12 +71,13 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, ldConnection *net.Conn, l
 						goto CONTINUE
 					}
 					wg.Add(1)
-					sender := senders.New(ctx, wg, ldConfig, &logDocStruct, logDocMessage)
+					sender := senders.New(ctx, wg, ldConfig, configFile, &logDocStruct, logDocMessage)
 					go sender.SendMessage()
 				}
 			}
 		CONTINUE:
 			time.Sleep(500 * time.Millisecond)
+			//log.Print(">> Reader ", file.Name(), " working...")
 		}
 	}
 }
