@@ -4,9 +4,11 @@ import (
 	"context"
 	"file-watcher/internal/app/structs"
 	"file-watcher/internal/app/watchers"
+	"fmt"
 	"github.com/vjeantet/grok"
 	"log"
 	"net"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -36,6 +38,18 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 		wg.Done()
 		log.Println("<< Exiting Application")
 	}()
+
+	if a.Config.Debug {
+		go func() {
+			var mem runtime.MemStats
+			for {
+				// Увлекаться этим сильно не надо, там stop / start the world
+				runtime.ReadMemStats(&mem)
+				fmt.Printf("Memstats:\n\tAlloc = %v MiB\n\tGoRoutines = %d\n", mem.Alloc/1024/1024, runtime.NumGoroutine())
+				time.Sleep(5 * time.Minute)
+			}
+		}()
+	}
 
 	g, err := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
 	if err != nil {
