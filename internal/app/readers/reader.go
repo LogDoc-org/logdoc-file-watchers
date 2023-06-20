@@ -35,20 +35,32 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 	log.Println("File ", file.Name(), " ready! Reading...")
 
 	// перемещаем указатель файла на конец файла
-	_, err := file.Seek(0, 2)
+	err := rePositioning(file)
 	if err != nil {
-		log.Println("ERROR: Ошибка перемещения указателя, ", err)
 		return
 	}
+
+	var prevFileSize int64
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			if _, e := os.Stat(file.Name()); os.IsNotExist(e) {
+
+			fileInfo, e := os.Stat(file.Name())
+			if os.IsNotExist(e) {
 				log.Println("File ", file.Name(), " does not exist")
 				return
+			}
+			if fileInfo.Size() < prevFileSize {
+				// файл был очищен, Перепозиционируемся
+				prevFileSize = fileInfo.Size()
+				// перемещаем указатель файла на конец файла
+				err := rePositioning(file)
+				if err != nil {
+					return
+				}
 			}
 
 			scanner := bufio.NewScanner(file)
@@ -78,8 +90,19 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 		CONTINUE:
 			time.Sleep(500 * time.Millisecond)
 			//log.Print(">> Reader ", file.Name(), " working...")
+			prevFileSize = fileInfo.Size()
 		}
 	}
+}
+
+func rePositioning(file *os.File) error {
+	// перемещаем указатель файла на конец файла
+	_, err := file.Seek(0, 2)
+	if err != nil {
+		log.Println("ERROR: Ошибка перемещения указателя, ", err)
+		return err
+	}
+	return nil
 }
 
 func processField(ldConf *structs.LD, configFile *structs.File, field string) string {
