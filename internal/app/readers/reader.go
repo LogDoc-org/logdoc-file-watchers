@@ -54,11 +54,12 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 				return
 			}
 			if fileInfo.Size() < prevFileSize {
-				// файл был очищен, Перепозиционируемся
+				log.Println("файл ", file.Name(), " был изменен в сторону уменьшения, перепозиционируемся")
 				prevFileSize = fileInfo.Size()
 				// перемещаем указатель файла на конец файла
 				err := rePositioning(file)
 				if err != nil {
+					log.Println("ERROR: Ошибка перепозиционирования по файлу ", file.Name(), " после его усечения, Выходим...")
 					return
 				}
 			}
