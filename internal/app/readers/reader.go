@@ -48,9 +48,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 			return
 		default:
 
-			fileInfo, e := os.Stat(file.Name())
-			if os.IsNotExist(e) {
-				log.Println("File ", file.Name(), " does not exists! waiting for file...")
+			if file == nil {
 				file, err = os.Open(watchingFile.Path)
 				if err != nil {
 					//log.Println("Error opening file ", file.Name())
@@ -63,18 +61,36 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 					return
 				}
 				log.Println("File ", file.Name(), " ready! Reading...")
-				fileInfo, _ = os.Stat(file.Name())
+				fileInfo, _ := os.Stat(file.Name())
 				prevFileSize = fileInfo.Size()
-			}
-
-			if fileInfo.Size() < prevFileSize {
-				log.Println("файл ", file.Name(), " был изменен в сторону уменьшения, переоткрываем")
-				prevFileSize = fileInfo.Size()
-				// перемещаем указатель файла на конец файла
-				err := rePositioning(file)
-				if err != nil {
-					log.Println("ERROR: Ошибка перепозиционирования по файлу ", file.Name(), " после его усечения, Выходим...")
-					return
+			} else {
+				fileInfo, e := os.Stat(file.Name())
+				if os.IsNotExist(e) {
+					log.Println("File ", file.Name(), " does not exists! waiting for file...")
+					file, err = os.Open(watchingFile.Path)
+					if err != nil {
+						//log.Println("Error opening file ", file.Name())
+						time.Sleep(500 * time.Millisecond)
+						continue
+					}
+					err := rePositioning(file)
+					if err != nil {
+						log.Println("ERROR: Ошибка перепозиционирования по файлу ", file.Name(), " после его усечения, Выходим...")
+						return
+					}
+					log.Println("File ", file.Name(), " ready! Reading...")
+					fileInfo, _ = os.Stat(file.Name())
+					prevFileSize = fileInfo.Size()
+				}
+				if fileInfo.Size() < prevFileSize {
+					log.Println("файл ", file.Name(), " был изменен в сторону уменьшения, переоткрываем")
+					prevFileSize = fileInfo.Size()
+					// перемещаем указатель файла на конец файла
+					err := rePositioning(file)
+					if err != nil {
+						log.Println("ERROR: Ошибка перепозиционирования по файлу ", file.Name(), " после его усечения, Выходим...")
+						return
+					}
 				}
 			}
 
@@ -108,6 +124,10 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 			prevFileSize = fileInfo.Size()
 		}
 	}
+}
+
+func checkFile(file *os.File) {
+
 }
 
 func rePositioning(file *os.File) error {
