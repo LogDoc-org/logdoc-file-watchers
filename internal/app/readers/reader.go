@@ -5,6 +5,7 @@ import (
 	"context"
 	"file-watcher/internal/app/senders"
 	"file-watcher/internal/app/structs"
+	"file-watcher/internal/app/watchers"
 	"file-watcher/internal/logdoc"
 	"file-watcher/internal/utils"
 	"github.com/vjeantet/grok"
@@ -50,7 +51,8 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 
 			fileInfo, e := os.Stat(file.Name())
 			if os.IsNotExist(e) {
-				log.Println("File ", file.Name(), " does not exist")
+				log.Println("File ", file.Name(), " does not exists... Starting watcher")
+				go watchers.WatchFile(ctx, wg, g, *ldConfig, ldConnection, *configFile)
 				return
 			}
 			if fileInfo.Size() < prevFileSize {
