@@ -15,10 +15,8 @@
     {
       "path": "example1.txt",
       "patterns": [
-        "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:%{WORD}%{URI})?\" \"%{DATA:referer}\"",
-        "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size}",
-        "%{IP:client} - - \\[%{HTTPDATE:timestamp}\\] \"%{DATA:request}\" %{NUMBER:status} %{NUMBER:bytes} \"%{DATA:referrer}\" \"%{DATA:user_agent}\""
-      ],
+        "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:%{WORD}%{URI})?\" \"%{DATA:referer}\""
+        ],
       "app": "file-watcher nginx access.log",
       "source": "file-watcher nginx access.log source",
       "level": "INFO",
