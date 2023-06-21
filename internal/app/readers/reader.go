@@ -48,6 +48,7 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 			return
 		default:
 
+			var fileInfo os.FileInfo
 			if file == nil {
 				file, err = os.Open(watchingFile.Path)
 				if err != nil {
@@ -61,11 +62,12 @@ func ReadFile(ctx context.Context, wg *sync.WaitGroup, g *grok.Grok, ldConnectio
 					return
 				}
 				log.Println("File ", file.Name(), " ready! Reading...")
-				fileInfo, _ := os.Stat(file.Name())
-				prevFileSize = fileInfo.Size()
+				fi, _ := os.Stat(file.Name())
+				prevFileSize = fi.Size()
+				fileInfo = fi
 			} else {
-				fileInfo, e := os.Stat(file.Name())
-				if os.IsNotExist(e) {
+				fileInfo, err = os.Stat(file.Name())
+				if os.IsNotExist(err) {
 					log.Println("File ", file.Name(), " does not exists! waiting for file...")
 					file, err = os.Open(watchingFile.Path)
 					if err != nil {
