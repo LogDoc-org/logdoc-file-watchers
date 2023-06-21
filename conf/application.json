@@ -13,7 +13,7 @@
   },
   "files": [
     {
-      "path": "/var/log/nginx/access.log",
+      "path": "example1.txt",
       "patterns": [
         "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:%{WORD}%{URI})?\" \"%{DATA:referer}\"",
         "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size}",
@@ -23,39 +23,6 @@
       "source": "file-watcher nginx access.log source",
       "level": "INFO",
       "layout": "02/Jan/2006:15:04:05 -0700"
-    },
-    {
-      "path": "/var/log/daemon.log",
-      "patterns": [
-        "%{CUSTOM_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}."
-      ],
-      "custom": "%{MONTH} %{MONTHDAY} %{TIME}",
-      "app": "file-watcher daemon.log",
-      "layout": "Jan 02 15:04:05"
-    },
-    {
-      "path": "/var/log/fontconfig.log",
-      "patterns": [
-        "%{GREEDYDATA:path}: %{GREEDYDATA:message}"
-      ],
-      "app": "file-watcher fontconfig.log",
-      "layout": "02/Jan/2006:15:04:05 -0700"
-    },
-    {
-      "path": "/var/log/dpkg.log",
-      "patterns": [
-        "(?P<timestamp>%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{TIME}) %{DATA:message}:%{DATA:arch} %{GREEDYDATA:version}"
-      ],
-      "app": "file-watcher dpkg.log",
-      "layout": "2006-01-02 15:04:05"
-    },
-    {
-      "path": "/opt/logdoc/community/log.log",
-      "patterns": [
-        "\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{LOGLEVEL:loglevel} %{DATA:class}\\.%{WORD:method}:%{NUMBER:line} - %{GREEDYDATA:message}"
-      ],
-      "app": "file-watcher logdoc community log",
-      "layout": "2006-01-02 15:04:05"
     }
   ]
 }
