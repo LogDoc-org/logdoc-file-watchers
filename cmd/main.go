@@ -7,7 +7,6 @@ import (
 	"file-watcher/internal/pkg/app"
 	"file-watcher/internal/utils"
 	"flag"
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
@@ -15,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 
 	conn, e := logdoc.Connect(&config.LogDoc)
 	if e != nil {
-		log.Fatal(" >> Fatal Error: Нет связи с LogDoc сервером, ", e)
+		log.Panic(" >> Fatal Error: Нет связи с LogDoc сервером, ", e)
 	}
 	defer (*conn).Close()
 
@@ -69,12 +69,40 @@ func main() {
 		wg.Add(1)
 
 		go application.Run(ctx, &wg)
-		fmt.Println("All goroutines restarted!")
+		log.Println("All goroutines restarted!")
 	})
 
 	log.Println("Application running, Press Ctrl+C to stop")
 	wg.Add(1)
 	go application.Run(ctx, &wg)
+
+	go func() {
+		for {
+			now := time.Now()
+			if now.Hour() == 0 && now.Minute() == 0 && now.Second() == 0 {
+				//if now.Minute() == 55 {
+				log.Println("Timer triggered, restarting all goroutines...")
+				cancel()
+				wg.Wait()
+
+				application.Mx.Lock()
+				err := viper.Unmarshal(config)
+				if err != nil {
+					log.Fatal("Error parsing configuration")
+				}
+				application.FilesMap = make(map[string]string)
+				application.Mx.Unlock()
+
+				// Пересоздаем контекст, тк предыдущий уже отменен
+				ctx, cancel = context.WithCancel(context.Background())
+				wg.Add(1)
+
+				go application.Run(ctx, &wg)
+				log.Println("All goroutines restarted!")
+				return
+			}
+		}
+	}()
 
 	<-sig
 	log.Println("!! Got bye bye signal, shutting down watchers")

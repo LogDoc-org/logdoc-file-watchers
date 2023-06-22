@@ -31,9 +31,11 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 	conn, err := net.DialTimeout(ldConf.Proto, address, 5*time.Second)
 	if err != nil {
 		log.Println("Error connecting LogDoc server, ", address, err)
+
 		return nil, err
 	}
 	log.Println("LogDoc server successfully connected")
+
 	return &conn, nil
 }
 
