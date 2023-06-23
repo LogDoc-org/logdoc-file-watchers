@@ -131,6 +131,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 							wg.Add(1)
 							sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
 							go sender.SendMessage()
+							goto CONTINUE
 						}
 						log.Println(watchingFile.Path, " patterns trying failed! Dropping message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)
 					}
@@ -140,6 +141,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 					log.Println(watchingFile.Path, " watcher scan error, ", err)
 				}
 			}
+		CONTINUE:
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
