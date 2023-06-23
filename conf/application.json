@@ -31,6 +31,7 @@
       ],
       "app": "file-watcher nginx error.log",
       "source": "file-watcher nginx error.log source",
+      "level": "ERROR",
       "layout": "2006/01/02 15:04:05"
     },
     {
