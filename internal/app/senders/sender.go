@@ -30,20 +30,20 @@ func New(ctx context.Context, wg *sync.WaitGroup, logDocConfig *structs.LD, watc
 	}
 }
 
-func (s *LogDocSender) SendMessage(ldConnection *structs.LDConnection, ldConnCh chan net.Conn) {
+func (s *LogDocSender) SendMessage(ldConnection *logdoc.LDConnection, ldConnCh chan net.Conn) {
 	defer func() {
 		s.wg.Done()
 		// log.Println("<< Exiting LogDoc sender goroutine")
 	}()
 
 	for {
-		// log.Print(">> Sender for file ", s.WatchingFile.Path, " working...")
+		log.Print(">> Sender for file ", s.WatchingFile.Path, " working...")
 		select {
 		case <-s.ctx.Done():
 			return
 		default:
 			if ldConnection.Conn == nil {
-				log.Println("ERROR sending message to LogDoc, waiting for connection...")
+				log.Println(s.WatchingFile.Path, " ERROR sending message to LogDoc, waiting for connection...")
 				time.Sleep(2 * time.Second)
 				continue
 			}
@@ -51,8 +51,14 @@ func (s *LogDocSender) SendMessage(ldConnection *structs.LDConnection, ldConnCh 
 			// Отправляем сообщение в LogDoc
 			err := logdoc.SendMessage(*ldConnection.Conn, s.Data)
 			if err != nil {
+				if !ldConnection.MX.TryLock() {
+					continue
+				}
+				ldConnection.Conn = nil
+				// log.Println(s.WatchingFile.Path, " got lock and made connection empty")
+				ldConnection.MX.Unlock()
 				ldConnCh <- nil
-				log.Println("ERROR sending message to LogDoc, retrying...\n\terror: ", err)
+				log.Println(s.WatchingFile.Path, " ERROR sending message to LogDoc, retrying...\n\terror: ", err)
 				time.Sleep(time.Second)
 				continue
 			}

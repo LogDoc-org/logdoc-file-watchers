@@ -41,7 +41,8 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("<< Exiting Application")
 	}()
 
-	ldConnection := structs.LDConnection{
+	ldConnection := logdoc.LDConnection{
+		MX:   &sync.Mutex{},
 		Conn: a.LogDocConnection,
 	}
 

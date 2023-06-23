@@ -10,10 +10,17 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
+type LDConnection struct {
+	MX   *sync.Mutex
+	Conn *net.Conn
+}
+
 type LogDocStruct struct {
+	Connection        *LDConnection
 	DateLayout        string
 	CustomDatePattern string
 	App               string
@@ -112,7 +119,7 @@ func WritePair(key string, value string, arr *[]byte) {
 	}
 }
 
-func (ld *LogDocStruct) ConstructMessageWithFields(ldConnection *net.Conn, g *grok.Grok, message string, pattern string) ([]byte, error) {
+func (ld *LogDocStruct) ConstructMessageWithFields(g *grok.Grok, message string, pattern string) ([]byte, error) {
 	var ldMessage strings.Builder
 	ldMessage.WriteString(message)
 
@@ -140,7 +147,7 @@ func (ld *LogDocStruct) ConstructMessageWithFields(ldConnection *net.Conn, g *gr
 		values["timestamp"] = "01/Jun/1951:23:59:59 +0300"
 	}
 
-	data, err := PrepareLogDocMessage(ldConnection, ld, values["timestamp"], ldMessage.String())
+	data, err := PrepareLogDocMessage(ld.Connection.Conn, ld, values["timestamp"], ldMessage.String())
 	if err != nil {
 		log.Println("Error Preparing LogDoc Message Structure:\n\tdata source date/time:", values["timestamp"], "\n\tmessage:", ldMessage.String())
 		return nil, err

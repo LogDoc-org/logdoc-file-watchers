@@ -1,15 +1,9 @@
 package structs
 
-import "net"
-
 type Config struct {
 	Debug  bool   `json:"debug"`
 	LogDoc LD     `json:"logdoc"`
 	Files  []File `json:"files"`
-}
-
-type LDConnection struct {
-	Conn *net.Conn
 }
 
 type LD struct {

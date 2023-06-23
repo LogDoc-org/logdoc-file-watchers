@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *grok.Grok, ldConfig structs.LD, ldConnection *structs.LDConnection, watchingFile structs.File, ldConnCh chan net.Conn) {
+func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *grok.Grok, ldConfig structs.LD, ldConnection *logdoc.LDConnection, watchingFile structs.File, ldConnCh chan net.Conn) {
 	defer func() {
 		wg.Done()
 		// log.Println("<< Exiting watcher goroutine WatchFile ", watchingFile.Path)
@@ -108,6 +108,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 					if data != "" {
 						// Формируем LD структуру на основе текущей конфигурации
 						logDocStruct := logdoc.LogDocStruct{
+							Connection:        ldConnection,
 							App:               utils.ProcessField(&ldConfig, &watchingFile, "app"),
 							Src:               utils.ProcessField(&ldConfig, &watchingFile, "src"),
 							Lvl:               utils.ProcessField(&ldConfig, &watchingFile, "lvl"),
@@ -115,9 +116,9 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 							CustomDatePattern: watchingFile.Custom,
 						}
 						for _, pattern := range watchingFile.Patterns {
-							log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
+							// log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
 							mx.Lock()
-							logDocMessage, err = logDocStruct.ConstructMessageWithFields(ldConnection.Conn, grok, data, pattern)
+							logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, data, pattern)
 							mx.Unlock()
 							if err == nil {
 								break
