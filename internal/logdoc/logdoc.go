@@ -14,7 +14,6 @@ import (
 )
 
 type LogDocStruct struct {
-	Conn              *net.Conn
 	DateLayout        string
 	CustomDatePattern string
 	App               string
@@ -40,6 +39,15 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 	return &conn, nil
 }
 
+func SendMessage(conn io.Writer, msg []byte) error {
+	_, err := conn.Write(msg)
+	if err != nil {
+		log.Println(fmt.Errorf("SendMessage ERROR, ошибка записи в соединение, %w", err))
+		return err
+	}
+	return nil
+}
+
 func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, message string) ([]byte, error) {
 	if conn == nil {
 		log.Println("Error in SendMessage, connection not available")
@@ -53,7 +61,7 @@ func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, 
 		lvl = ld.Lvl
 	}
 
-	ip := (*ld.Conn).RemoteAddr().String()
+	ip := (*conn).RemoteAddr().String()
 	pid := fmt.Sprintf("%d", os.Getpid())
 	src := ld.Src
 
@@ -81,21 +89,12 @@ func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, 
 	// Финальный байт, завершаем
 	result = append(result, []byte("\n")...)
 
-	if *ld.Conn == nil {
+	if *conn == nil {
 		log.Println(fmt.Errorf("соединение c LogDoc сервером потеряно, %w", err))
 		return nil, err
 	}
 
 	return result, nil
-}
-
-func SendMessage(conn io.Writer, msg []byte) error {
-	_, err := conn.Write(msg)
-	if err != nil {
-		log.Println(fmt.Errorf("SendMessage ERROR, ошибка записи в соединение, %w", err))
-		return err
-	}
-	return nil
 }
 
 func WritePair(key string, value string, arr *[]byte) {
@@ -113,7 +112,7 @@ func WritePair(key string, value string, arr *[]byte) {
 	}
 }
 
-func (ld *LogDocStruct) ConstructMessageWithFields(g *grok.Grok, message string, pattern string) ([]byte, error) {
+func (ld *LogDocStruct) ConstructMessageWithFields(ldConnection *net.Conn, g *grok.Grok, message string, pattern string) ([]byte, error) {
 	var ldMessage strings.Builder
 	ldMessage.WriteString(message)
 
@@ -141,7 +140,7 @@ func (ld *LogDocStruct) ConstructMessageWithFields(g *grok.Grok, message string,
 		values["timestamp"] = "01/Jun/1951:23:59:59 +0300"
 	}
 
-	data, err := PrepareLogDocMessage(ld.Conn, ld, values["timestamp"], ldMessage.String())
+	data, err := PrepareLogDocMessage(ldConnection, ld, values["timestamp"], ldMessage.String())
 	if err != nil {
 		log.Println("Error Preparing LogDoc Message Structure:\n\tdata source date/time:", values["timestamp"], "\n\tmessage:", ldMessage.String())
 		return nil, err

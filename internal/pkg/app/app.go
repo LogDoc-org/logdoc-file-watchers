@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"file-watcher/internal/app/watchers"
+	"file-watcher/internal/logdoc"
 	"file-watcher/internal/structs"
+	"file-watcher/internal/utils"
 	"fmt"
 	"github.com/vjeantet/grok"
 	"log"
@@ -39,6 +41,21 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 		log.Println("<< Exiting Application")
 	}()
 
+	ldConnection := structs.LDConnection{
+		Conn: a.LogDocConnection,
+	}
+
+	ldConnCh := make(chan net.Conn)
+	// Запускаем мониторинг соединения
+	go func() {
+		for conn := range ldConnCh {
+			// поступил сигнал обрыва соединения
+			if conn == nil {
+				ldConnection.Conn = logDocReconnect(a.Config)
+			}
+		}
+	}()
+
 	if a.Config.Debug {
 		go func() {
 			var mem runtime.MemStats
@@ -53,7 +70,7 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 	g, err := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
 	if err != nil {
-		log.Fatal("Error initializing patterns processor, ", err)
+		log.Panic("Error initializing patterns processor, ", err)
 	}
 	a.Grok = g
 
@@ -94,12 +111,26 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 							watchingFile = val
 						}
 					}
-					//atomic.AddInt64(&a.Watchers, 1)
 					wg.Add(1)
-					go watchers.WatchFile(ctx, &a.Mx, wg, a.Grok, a.Config.LogDoc, a.LogDocConnection, watchingFile)
+					go watchers.WatchFile(ctx, &a.Mx, wg, a.Grok, a.Config.LogDoc, &ldConnection, watchingFile, ldConnCh)
 				}
 			}
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+func logDocReconnect(config *structs.Config) *net.Conn {
+	// коннектимся к ЛД
+	conn, err := utils.Retryer(func() (*net.Conn, error) {
+		r, e := logdoc.Connect(&config.LogDoc)
+		if e != nil {
+			return nil, e
+		}
+		return r, nil
+	}, config.LogDoc.Retries, 5*time.Second)
+	if err != nil {
+		log.Panic("LogDoc connection failed")
+	}
+	return conn
 }

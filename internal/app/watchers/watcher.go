@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *grok.Grok, ldConfig structs.LD, ldConnection *net.Conn, watchingFile structs.File) {
+func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *grok.Grok, ldConfig structs.LD, ldConnection *structs.LDConnection, watchingFile structs.File, ldConnCh chan net.Conn) {
 	defer func() {
 		wg.Done()
 		// log.Println("<< Exiting watcher goroutine WatchFile ", watchingFile.Path)
@@ -108,7 +108,6 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 					if data != "" {
 						// Формируем LD структуру на основе текущей конфигурации
 						logDocStruct := logdoc.LogDocStruct{
-							Conn:              ldConnection,
 							App:               utils.ProcessField(&ldConfig, &watchingFile, "app"),
 							Src:               utils.ProcessField(&ldConfig, &watchingFile, "src"),
 							Lvl:               utils.ProcessField(&ldConfig, &watchingFile, "lvl"),
@@ -118,7 +117,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 						for _, pattern := range watchingFile.Patterns {
 							log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
 							mx.Lock()
-							logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, data, pattern)
+							logDocMessage, err = logDocStruct.ConstructMessageWithFields(ldConnection.Conn, grok, data, pattern)
 							mx.Unlock()
 							if err == nil {
 								break
@@ -130,7 +129,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 						if logDocMessage != nil {
 							wg.Add(1)
 							sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
-							go sender.SendMessage()
+							go sender.SendMessage(ldConnection, ldConnCh)
 							goto CONTINUE
 						}
 						log.Println(watchingFile.Path, " patterns trying failed! Dropping message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)

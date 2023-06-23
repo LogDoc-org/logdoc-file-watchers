@@ -9,7 +9,7 @@
       "source": "file-watcher source",
       "level": "DEBUG"
     },
-    "retries": 3
+    "retries": 10
   },
   "files": [
     {

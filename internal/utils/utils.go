@@ -44,7 +44,6 @@ func Retryer(fn func() (*net.Conn, error), maxRetries int, initialRetryInterval 
 			time.Sleep(initialRetryInterval)
 		}
 	} else {
-
 		for i := 0; i < maxRetries; i++ {
 			resp, err := fn()
 			if err == nil {
