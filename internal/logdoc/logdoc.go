@@ -2,7 +2,7 @@ package logdoc
 
 import (
 	"bytes"
-	"file-watcher/internal/app/structs"
+	"file-watcher/internal/structs"
 	"fmt"
 	"github.com/vjeantet/grok"
 	"log"
@@ -40,7 +40,6 @@ func Connect(ldConf *structs.LD) (*net.Conn, error) {
 }
 
 func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, message string) ([]byte, error) {
-
 	if conn == nil {
 		log.Println("Error in SendMessage, connection not available")
 		return nil, fmt.Errorf("error in SendMessage, connection not available")

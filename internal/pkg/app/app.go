@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"file-watcher/internal/app/structs"
 	"file-watcher/internal/app/watchers"
+	"file-watcher/internal/structs"
 	"fmt"
 	"github.com/vjeantet/grok"
 	"log"
@@ -96,7 +96,7 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 					}
 					//atomic.AddInt64(&a.Watchers, 1)
 					wg.Add(1)
-					go watchers.WatchFile(ctx, wg, a.Grok, a.Config.LogDoc, a.LogDocConnection, watchingFile)
+					go watchers.WatchFile(ctx, &a.Mx, wg, a.Grok, a.Config.LogDoc, a.LogDocConnection, watchingFile)
 				}
 			}
 			time.Sleep(1 * time.Second)

@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 )
 
 func main() {
@@ -75,34 +74,6 @@ func main() {
 	log.Println("Application running, Press Ctrl+C to stop")
 	wg.Add(1)
 	go application.Run(ctx, &wg)
-
-	go func() {
-		for {
-			now := time.Now()
-			if now.Hour() == 0 && now.Minute() == 0 && now.Second() == 0 {
-				//if now.Minute() == 55 {
-				log.Println("Timer triggered, restarting all goroutines...")
-				cancel()
-				wg.Wait()
-
-				application.Mx.Lock()
-				err := viper.Unmarshal(config)
-				if err != nil {
-					log.Fatal("Error parsing configuration")
-				}
-				application.FilesMap = make(map[string]string)
-				application.Mx.Unlock()
-
-				// Пересоздаем контекст, тк предыдущий уже отменен
-				ctx, cancel = context.WithCancel(context.Background())
-				wg.Add(1)
-
-				go application.Run(ctx, &wg)
-				log.Println("All goroutines restarted!")
-				return
-			}
-		}
-	}()
 
 	<-sig
 	log.Println("!! Got bye bye signal, shutting down watchers")

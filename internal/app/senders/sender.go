@@ -2,8 +2,8 @@ package senders
 
 import (
 	"context"
-	"file-watcher/internal/app/structs"
 	"file-watcher/internal/logdoc"
+	"file-watcher/internal/structs"
 	"file-watcher/internal/utils"
 	"log"
 	"net"
@@ -61,7 +61,7 @@ func (s *LogDocSender) SendMessage() {
 				continue
 			}
 
-			log.Println("Message successfully sent to LogDoc")
+			log.Println(s.WatchingFile.Path, " message successfully sent to LogDoc")
 			return
 		}
 	}

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"file-watcher/internal/structs"
 	"fmt"
 	"log"
 	"net"
@@ -14,6 +15,19 @@ func Ternary(condition bool, iftrue, iffalse any) any {
 		return iftrue
 	}
 	return iffalse
+}
+
+func ProcessField(ldConf *structs.LD, configFile *structs.File, field string) string {
+	switch field {
+	case "app":
+		return Ternary(configFile.App == "", ldConf.Default.App, configFile.App).(string)
+	case "src":
+		return Ternary(configFile.Source == "", ldConf.Default.Source, configFile.Source).(string)
+	case "lvl":
+		return Ternary(configFile.Level == "", ldConf.Default.Level, configFile.Level).(string)
+	default:
+		return ""
+	}
 }
 
 // реализация паттерна timeout and retry

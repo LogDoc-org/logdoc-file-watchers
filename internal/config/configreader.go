@@ -1,7 +1,7 @@
 package configreader
 
 import (
-	"file-watcher/internal/app/structs"
+	"file-watcher/internal/structs"
 	"fmt"
 	"github.com/spf13/viper"
 	"log"
