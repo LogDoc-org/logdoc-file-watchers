@@ -25,6 +25,15 @@
       "layout": "02/Jan/2006:15:04:05 -0700"
     },
     {
+      "path": "/var/log/nginx/error.log",
+      "patterns": [
+        "(?P<timestamp>%{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}) \\[%{WORD:log_level}\\] %{NUMBER:nginx_pid}#%{NUMBER:request_id}: %{GREEDYDATA:error_message}, client: %{IPV4:client_ip}, server: %{GREEDYDATA:server_name}, request: \"%{WORD:http_method} %{URIPATH:path} HTTP/%{NUMBER:http_version}\", host: \"%{HOSTNAME:host}\""
+      ],
+      "app": "file-watcher nginx error.log",
+      "source": "file-watcher nginx error.log source",
+      "layout": "2006/01/02 15:04:05"
+    },
+    {
       "path": "/var/log/daemon.log",
       "patterns": [
         "%{CUSTOM_DATE:timestamp} %{WORD:host} %{WORD:process}\\[%{NUMBER:pid}\\]: %{GREEDYDATA:message}."

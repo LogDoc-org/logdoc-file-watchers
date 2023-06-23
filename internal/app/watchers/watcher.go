@@ -127,13 +127,12 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 						}
 						// log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 
-						if logDocMessage == nil {
-							log.Println("Patterns trying failed! Dropping message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)
-							// goto CONTINUE
+						if logDocMessage != nil {
+							wg.Add(1)
+							sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
+							go sender.SendMessage()
 						}
-						wg.Add(1)
-						sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
-						go sender.SendMessage()
+						log.Println(watchingFile.Path, " patterns trying failed! Dropping message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)
 					}
 				}
 

@@ -5,6 +5,7 @@ import (
 	"file-watcher/internal/structs"
 	"fmt"
 	"github.com/vjeantet/grok"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -88,7 +89,7 @@ func PrepareLogDocMessage(conn *net.Conn, ld *LogDocStruct, srcDateTime string, 
 	return result, nil
 }
 
-func SendMessage(conn net.Conn, msg []byte) error {
+func SendMessage(conn io.Writer, msg []byte) error {
 	_, err := conn.Write(msg)
 	if err != nil {
 		log.Println(fmt.Errorf("SendMessage ERROR, ошибка записи в соединение, %w", err))
@@ -140,10 +141,10 @@ func (ld *LogDocStruct) ConstructMessageWithFields(g *grok.Grok, message string,
 		values["timestamp"] = "01/Jun/1951:23:59:59 +0300"
 	}
 
-	data, e := PrepareLogDocMessage(ld.Conn, ld, values["timestamp"], ldMessage.String())
-	if e != nil {
+	data, err := PrepareLogDocMessage(ld.Conn, ld, values["timestamp"], ldMessage.String())
+	if err != nil {
 		log.Println("Error Preparing LogDoc Message Structure:\n\tdata source date/time:", values["timestamp"], "\n\tmessage:", ldMessage.String())
-		return data, nil
+		return nil, err
 	}
 
 	return data, nil
@@ -205,9 +206,8 @@ func extractMessage(msg string) string {
 	}
 	if message == "" {
 		return msg
-	} else {
-		return message
 	}
+	return message
 }
 
 func writeInt(in int) []byte {
@@ -217,14 +217,4 @@ func writeInt(in int) []byte {
 	buf.WriteByte(byte((in >> 8) & 0xff))
 	buf.WriteByte(byte(in & 0xff))
 	return buf.Bytes()
-}
-
-func GetSourceName(pc uintptr, file string, line int, ok bool) string {
-	// in skip if we're using 1, so it will actually log the where the error happened, 0 = this function
-	return file[strings.LastIndex(file, "/")+1:]
-}
-
-func GetSourceLineNum(pc uintptr, file string, line int, ok bool) int {
-	// in skip if we're using 1, so it will actually log the where the error happened, 0 = this function
-	return line
 }
