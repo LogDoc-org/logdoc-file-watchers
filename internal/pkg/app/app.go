@@ -52,13 +52,17 @@ func (a *App) Run(ctx context.Context, shutdown chan struct{}, wg *sync.WaitGrou
 	go func() {
 		defer wg.Done()
 
-		select {
-		case <-ctx.Done():
-			return
-		case conn := <-ldConnCh:
-			// поступил сигнал обрыва соединения
-			if conn == nil {
-				ldConnection.Conn = logDocReconnect(shutdown, a.Config)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case conn := <-ldConnCh:
+				// поступил сигнал обрыва соединения
+				if conn == nil {
+					ldConnection.Conn = logDocReconnect(shutdown, a.Config)
+				}
+			default:
+				time.Sleep(time.Second)
 			}
 		}
 	}()
