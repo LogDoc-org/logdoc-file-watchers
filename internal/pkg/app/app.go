@@ -35,36 +35,49 @@ func New(config *structs.Config, conn *net.Conn) *App {
 	}
 }
 
-func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
+func (a *App) Run(ctx context.Context, shutdown chan struct{}, wg *sync.WaitGroup) {
 	defer func() {
 		wg.Done()
 		log.Println("<< Exiting Application")
 	}()
+
+	ldConnCh := make(chan net.Conn)
 
 	ldConnection := logdoc.LDConnection{
 		MX:   &sync.Mutex{},
 		Conn: a.LogDocConnection,
 	}
 
-	ldConnCh := make(chan net.Conn)
-	// Запускаем мониторинг соединения
+	wg.Add(1)
 	go func() {
-		for conn := range ldConnCh {
+		defer wg.Done()
+
+		select {
+		case <-ctx.Done():
+			return
+		case conn := <-ldConnCh:
 			// поступил сигнал обрыва соединения
 			if conn == nil {
-				ldConnection.Conn = logDocReconnect(a.Config)
+				ldConnection.Conn = logDocReconnect(shutdown, a.Config)
 			}
 		}
 	}()
 
 	if a.Config.Debug {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
+
 			var mem runtime.MemStats
 			for {
-				// Увлекаться этим сильно не надо, там stop / start the world
-				runtime.ReadMemStats(&mem)
-				fmt.Printf("Memstats:\n\tAlloc = %v MiB\n\tGoRoutines = %d\n", mem.Alloc/1024/1024, runtime.NumGoroutine())
-				time.Sleep(5 * time.Minute)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(5 * time.Minute):
+					// Увлекаться этим сильно не надо, там stop / start the world
+					runtime.ReadMemStats(&mem)
+					fmt.Printf("Memstats:\n\tAlloc = %v MiB\n\tGoRoutines = %d\n", mem.Alloc/1024/1024, runtime.NumGoroutine())
+				}
 			}
 		}()
 	}
@@ -121,7 +134,7 @@ func (a *App) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-func logDocReconnect(config *structs.Config) *net.Conn {
+func logDocReconnect(shutdown chan struct{}, config *structs.Config) *net.Conn {
 	// коннектимся к ЛД
 	conn, err := utils.Retryer(func() (*net.Conn, error) {
 		r, e := logdoc.Connect(&config.LogDoc)
@@ -131,7 +144,9 @@ func logDocReconnect(config *structs.Config) *net.Conn {
 		return r, nil
 	}, config.LogDoc.Retries, 5*time.Second)
 	if err != nil {
-		log.Panic("LogDoc connection failed")
+		log.Print("LogDoc connection failed, shutting down application")
+		shutdown <- struct{}{}
+		return nil
 	}
 	return conn
 }

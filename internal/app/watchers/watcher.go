@@ -128,8 +128,8 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 						// log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
 
 						if logDocMessage != nil {
-							wg.Add(1)
 							sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
+							wg.Add(1)
 							go sender.SendMessage(ldConnection, ldConnCh)
 							goto CONTINUE
 						}

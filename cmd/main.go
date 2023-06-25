@@ -35,6 +35,8 @@ func main() {
 	}
 	defer (*conn).Close()
 
+	shutdown := make(chan struct{})
+
 	// Gracefully Shutdown
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
@@ -66,18 +68,20 @@ func main() {
 		// Пересоздаем контекст, тк предыдущий уже отменен
 		ctx, cancel = context.WithCancel(context.Background())
 		wg.Add(1)
-
-		go application.Run(ctx, &wg)
+		go application.Run(ctx, shutdown, &wg)
 		log.Println("All goroutines restarted!")
 	})
 
 	log.Println("Application running, Press Ctrl+C to stop")
 	wg.Add(1)
-	go application.Run(ctx, &wg)
+	go application.Run(ctx, shutdown, &wg)
 
-	<-sig
-	log.Println("!! Got bye bye signal, shutting down watchers")
-
+	select {
+	case <-sig:
+		log.Println("!! Got bye bye signal, shutting down watchers")
+	case <-shutdown:
+		log.Println("!! Got shutdown signal, shutting down watchers")
+	}
 	cancel()
 	wg.Wait()
 
