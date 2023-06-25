@@ -31,7 +31,8 @@ func main() {
 
 	conn, e := logdoc.Connect(&config.LogDoc)
 	if e != nil {
-		log.Panic(" >> Fatal Error: Нет связи с LogDoc сервером, ", e)
+		log.Println(" >> Fatal Error: Нет связи с LogDoc сервером, ", e)
+		return
 	}
 	defer (*conn).Close()
 

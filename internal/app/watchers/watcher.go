@@ -100,6 +100,10 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 			return
 		default:
 			if file != nil {
+				if ldConnection.Conn == nil {
+					log.Println(watchingFile.Path, " watcher, Connection not available, waiting...")
+					continue
+				}
 				// Ошибок нет, читаем файл
 				scanner := bufio.NewScanner(file)
 				for scanner.Scan() {
@@ -118,7 +122,8 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 						for _, pattern := range watchingFile.Patterns {
 							// log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
 							mx.Lock()
-							logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, data, pattern)
+							ip := (*logDocStruct.Connection.Conn).RemoteAddr().String()
+							logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, ip, data, pattern)
 							mx.Unlock()
 							if err == nil {
 								break
