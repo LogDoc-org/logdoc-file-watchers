@@ -17,7 +17,8 @@
       "patterns": [
         "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size} \"%{GREEDYDATA:url}(?:%{WORD}%{URI})?\" \"%{DATA:referer}\"",
         "%{IP:client} %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \"%{WORD:method} %{URIPATHPARAM:uri} (?P<http_version>%{WORD}/%{NUMBER})\" %{NUMBER:http_response_code} %{NUMBER:content_size}",
-        "%{IP:client} - - \\[%{HTTPDATE:timestamp}\\] \"%{DATA:request}\" %{NUMBER:status} %{NUMBER:bytes} \"%{DATA:referrer}\" \"%{DATA:user_agent}\""
+        "%{IP:client} - - \\[%{HTTPDATE:timestamp}\\] \"%{DATA:request}\" %{NUMBER:status} %{NUMBER:bytes} \"%{DATA:referrer}\" \"%{DATA:user_agent}\"",
+        "\\[%{HTTPDATE:timestamp}\\] %{GREEDYDATA:message}"
       ],
       "app": "file-watcher nginx access.log",
       "source": "file-watcher nginx access.log source",
@@ -27,7 +28,8 @@
     {
       "path": "/var/log/nginx/error.log",
       "patterns": [
-        "(?P<timestamp>%{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}) \\[%{WORD:log_level}\\] %{NUMBER:nginx_pid}#%{NUMBER:request_id}: %{GREEDYDATA:error_message}, client: %{IPV4:client_ip}, server: %{GREEDYDATA:server_name}, request: \"%{WORD:http_method} %{URIPATH:path} HTTP/%{NUMBER:http_version}\", host: \"%{HOSTNAME:host}\""
+        "(?P<timestamp>%{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}) \\[%{WORD:log_level}\\] %{NUMBER:nginx_pid}#%{NUMBER:request_id}: %{GREEDYDATA:error_message}, client: %{IPV4:client_ip}, server: %{GREEDYDATA:server_name}, request: \"%{WORD:http_method} %{URIPATH:path} HTTP/%{NUMBER:http_version}\", host: \"%{HOSTNAME:host}\"",
+        "(?P<timestamp>%{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}) %{GREEDYDATA:message}"
       ],
       "app": "file-watcher nginx error.log",
       "source": "file-watcher nginx error.log source",
