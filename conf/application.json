@@ -1,5 +1,5 @@
 {
-  "debug": false,
+  "debug": true,
   "logdoc": {
     "host": "127.0.0.1",
     "port": "5656",
@@ -9,7 +9,7 @@
       "source": "file-watcher source",
       "level": "DEBUG"
     },
-    "retries": 2
+    "retries": 0
   },
   "files": [
     {
