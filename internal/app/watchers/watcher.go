@@ -102,6 +102,7 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 			if file != nil {
 				if ldConnection.Conn == nil {
 					log.Println(watchingFile.Path, " watcher, Connection not available, waiting...")
+					time.Sleep(time.Second)
 					continue
 				}
 				// Ошибок нет, читаем файл
