@@ -100,13 +100,12 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 			return
 		default:
 			if file != nil {
-				var ip string
-				if ldConnection.Conn == nil {
+				active, ip := checkConnection(ldConnection)
+				if !active {
 					log.Println(watchingFile.Path, " watcher, Connection not available, waiting...")
 					time.Sleep(time.Second)
 					continue
 				}
-				ip = (*ldConnection.Conn).RemoteAddr().String()
 				// Ошибок нет, читаем файл
 				scanner := bufio.NewScanner(file)
 				for scanner.Scan() {
@@ -168,4 +167,14 @@ func rePositioning(file io.Seeker) error {
 		return err
 	}
 	return nil
+}
+
+func checkConnection(ldConnection *logdoc.LDConnection) (bool, string) {
+	ldConnection.MX.Lock()
+	defer ldConnection.MX.Unlock()
+
+	if ldConnection.Conn == nil {
+		return false, ""
+	}
+	return true, (*ldConnection.Conn).RemoteAddr().String()
 }
