@@ -71,7 +71,7 @@ func PrepareLogDocMessage(ip string, ld *LogDocStruct, srcDateTime string, messa
 		log.Println("Error parsing source date time:\n\t", srcDateTime, "\n\tlayout:", ld.DateLayout)
 		return nil, err
 	}
-	tsrc := t.Format("060102150405.000") + "\n"
+	tsrc := t.Format("060102150405.999") + "\n"
 
 	// Пишем заголовок
 	result := []byte{6, 3}
