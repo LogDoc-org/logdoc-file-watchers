@@ -72,6 +72,7 @@ func PrepareLogDocMessage(ip string, ld *LogDocStruct, srcDateTime string, messa
 		return nil, err
 	}
 	tsrc := t.Format("060102150405.999") + "\n"
+	tsrc = strings.ReplaceAll(tsrc, ".", "")
 
 	// Пишем заголовок
 	result := []byte{6, 3}
