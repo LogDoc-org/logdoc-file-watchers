@@ -24,6 +24,8 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 		// log.Println("<< Exiting watcher goroutine WatchFile ", watchingFile.Path)
 	}()
 
+	var dataBuffer strings.Builder
+
 	if watchingFile.Custom != "" {
 		err := grok.AddPattern("CUSTOM_DATE", watchingFile.Custom)
 		if err != nil {
@@ -107,57 +109,66 @@ func WatchFile(ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *
 					continue
 				}
 				// Ошибок нет, читаем файл
+
 				scanner := bufio.NewScanner(file)
 				for scanner.Scan() {
 					data := scanner.Text()
 
 					if data != "" {
-						// Формируем LD структуру на основе текущей конфигурации
-						logDocStruct := logdoc.LogDocStruct{
-							Connection:        ldConnection,
-							App:               utils.ProcessField(&ldConfig, &watchingFile, "app"),
-							Src:               utils.ProcessField(&ldConfig, &watchingFile, "src"),
-							Lvl:               utils.ProcessField(&ldConfig, &watchingFile, "lvl"),
-							DateLayout:        watchingFile.Layout,
-							CustomDatePattern: watchingFile.Custom,
-						}
-
-						var logDocMessage []byte
-						for _, pattern := range watchingFile.Patterns {
-							// log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
-							mx.Lock()
-							logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, ip, data, pattern)
-							mx.Unlock()
-							if err == nil {
-								log.Println(watchingFile.Path, "SUCCESS, constructing LogDoc message:\n\tfile:", watchingFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\t")
-								break
-							}
-							log.Println(watchingFile.Path, "ERROR, failed constructing LogDoc message:\n\tfile:", watchingFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
-						}
-						// log.Println("LogDoc Message constructed, ready for sending, source date/time:", srcDateTime, ", data:", message)
-						// перебрали все паттерны, ничего не подошло
-						if logDocMessage == nil {
-							log.Println(watchingFile.Path, ", all patterns trying failed! Constructing plain message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)
-							logDocMessage, err = logdoc.PrepareLogDocMessage(ip, &logDocStruct, "01/Jun/1951:23:59:59 +0300", data)
-
-							if err != nil {
-								log.Println(watchingFile.Path, " error constructing plain message, dropping message, error:", err)
-								goto CONTINUE
-							}
-						}
-
-						if logDocMessage != nil {
-							sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
-							wg.Add(1)
-							go sender.SendMessage(ldConnection, ldConnCh)
+						switch {
+						case (data[:1] == "[" && dataBuffer.Len() == 0) || (dataBuffer.Len() != 0 && data[:1] != "["):
+							dataBuffer.WriteString(data)
+							dataBuffer.WriteString("\n")
+						case dataBuffer.Len() != 0 && data[:1] == "[":
+							flushBuffer(&dataBuffer, ctx, mx, wg, grok, ldConfig, ldConnection, watchingFile, ldConnCh, ip)
 						}
 					}
 				}
 			}
-		CONTINUE:
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
+}
+
+func flushBuffer(dataBuffer *strings.Builder, ctx context.Context, mx *sync.RWMutex, wg *sync.WaitGroup, grok *grok.Grok, ldConfig structs.LD, ldConnection *logdoc.LDConnection, watchingFile structs.File, ldConnCh chan net.Conn, ip string) {
+	dataBuffer.WriteString("\n")
+	data := dataBuffer.String()
+	logDocStruct := logdoc.LogDocStruct{
+		Connection:        ldConnection,
+		App:               utils.ProcessField(&ldConfig, &watchingFile, "app"),
+		Src:               utils.ProcessField(&ldConfig, &watchingFile, "src"),
+		Lvl:               utils.ProcessField(&ldConfig, &watchingFile, "lvl"),
+		DateLayout:        watchingFile.Layout,
+		CustomDatePattern: watchingFile.Custom,
+	}
+	var logDocMessage []byte
+	var err error
+	for _, pattern := range watchingFile.Patterns {
+		// log.Println(watchingFile.Path, " trying pattern: ", pattern, "\n\tfile:", watchingFile.Path, "\n\tdata:", data)
+		mx.Lock()
+		logDocMessage, err = logDocStruct.ConstructMessageWithFields(grok, ip, data, pattern)
+		mx.Unlock()
+		if err == nil {
+			log.Println(watchingFile.Path, "SUCCESS, constructing LogDoc message:\n\tfile:", watchingFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\t")
+			break
+		}
+		log.Println(watchingFile.Path, "ERROR, failed constructing LogDoc message:\n\tfile:", watchingFile.Path, "\n\tdata:", data, "\n\tpattern:", pattern, "\n\terror:", err, ", trying next pattern (if available)...")
+	}
+	if logDocMessage == nil {
+		log.Println(watchingFile.Path, ", all patterns trying failed! Constructing plain message...\n\tfile:", watchingFile.Path, "\n\tdata:", data)
+		logDocMessage, err = logdoc.PrepareLogDocMessage(ip, &logDocStruct, "01/Jun/1951:23:59:59 +0300", data)
+
+		if err != nil {
+			log.Println(watchingFile.Path, " error constructing plain message, dropping message, error:", err)
+			return
+		}
+	}
+	if logDocMessage != nil {
+		sender := senders.New(ctx, wg, &ldConfig, &watchingFile, &logDocStruct, logDocMessage)
+		wg.Add(1)
+		go sender.SendMessage(ldConnection, ldConnCh)
+	}
+	dataBuffer.Reset()
 }
 
 func rePositioning(file io.Seeker) error {
