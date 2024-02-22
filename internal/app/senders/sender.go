@@ -37,7 +37,7 @@ func (s *LogDocSender) SendMessage(ldConnection *logdoc.LDConnection, ldConnCh c
 	}()
 
 	for {
-		log.Print(">> Sender for file ", s.WatchingFile.Path, " working...")
+		// utils.Debug(">> Sender for file ", s.WatchingFile.Path, " working...")
 		select {
 		case <-s.ctx.Done():
 			return
